@@ -80,7 +80,7 @@ function rand_matsolve(A,B,seed=nothing)
     return mapslices(s,B,dims=[1])
 end
 
-function adi(A,B,F,N,p,q)
+function adi_solve(A,B,F,N,p,q)
     m,m2 = size(A)
     n,n2 = size(B)
 
