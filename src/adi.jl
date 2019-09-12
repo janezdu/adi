@@ -4,10 +4,11 @@ module Adi
 using Random
 using LinearAlgebra
 using SparseArrays
-using Plots
+using Elliptic
+# using Plots
 
 # exported functions
-export rand_matsolve, rand_linsolve, adi
+export rand_matsolve, rand_linsolve, adi_solve, adi_parameters
 
 function rand_linsolve(A,b,B, Stype, seed=nothing, verbose=false)
     """
@@ -91,20 +92,37 @@ function adi_solve(A,B,F,N,p,q)
     Xprev = zeros((m,n))
     for i = 1:N
         Ahalf = (A - p[i] * I)
-
-
         Bhalf = Xprev * (B - q[i] * I) + F
-
         Xhalf = rand_matsolve(Ahalf,Bhalf)
-
 
         Asolve = (B - q[i] * I)
         Bsolve = (A - q[i] * I) * Xhalf - F
         X = (rand_matsolve(Asolve', Bsolve'))'
+
         Xprev = X
         push!(sols,X)
     end
     return sols
 end
+
+function adi_parameters(a,b,c,d,J)
+    p = zeros(J)
+    q = zeros(J)
+    gamma = abs((c-a) * (d-b)  / (c-b)*(d-a))
+    alpha = -1 + 2*gamma + 2 * sqrt(gamma^2 - gamma)
+    kappa = sqrt(1 - 1 / (alpha^2))
+
+    TT(t) = (-alpha * t -1)/(t + alpha)
+
+    for j = 1:J
+        z = (2 * j + 1) / (2 * J) * Elliptic.K(kappa)
+        t = -alpha * Elliptic.Jacobi.dn(z,kappa)
+        p[j] = TT(t)
+        q[j] = TT(-t)
+    end
+
+    return p,q
+end
+
 
 end

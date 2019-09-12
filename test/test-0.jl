@@ -1,18 +1,23 @@
 include("../src/adi.jl")
-using .Adi, Test
+using .Adi, Test, LinearAlgebra
 
 #--- Small Test
-A = rand(Float64,5,5)
-B = rand(Float64,3,3)
-F = rand(Float64,5,3)
+Q,R = qr(rand(5,5))
+Aevals = [1., 2., 3., 4., 5.]
+Bevals = [11., 12., 13., 14., 15.]
+A = Q * Diagonal(Aevals) * Q.T
+B = Q * Diagonal(Bevals) * Q.T
 
+F = rand(Float64,5,5)
+
+a = minimum(Aevals)
+b = maximum(Aevals)
+c = minimum(Bevals)
+d = maximum(Bevals)
 N = 5
-p = ones(N)
-q = ones(N)
+p,q = adi_parameters(a,b,c,d,N)
 
 sols = Adi.adi_solve(A,B,F,N,p,q)
-
-
 #---
 
 
