@@ -1,0 +1,447 @@
+\documentclass[10pt]{article}
+
+% Mathematics
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{dsfont}
+\usepackage{hyperref} % clickable links and references
+
+\makeatletter
+\renewcommand*{\eqref}[1]{%
+  \hyperref[{#1}]{\textup{\tagform@{\ref*{#1}}}}%
+}
+\makeatother
+
+% Each counter is different
+\usepackage{amsthm} % style of theorem, definition etc
+\usepackage{cleveref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}{Corollary}[section]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{assumption}{Assumption}[section]
+\newtheorem{note}{Remark}[section]
+\newtheorem{remark}{Remark}[section]
+
+
+
+% \crefname{theorem}{theorem}{theorems}
+% \crefname{remark}{remark}{remarks}
+
+% Bibliography
+\usepackage[maxbibnames=99, giveninits=true, doi=false, isbn=false, url=false, natbib=true, backend=bibtex]{biblatex}
+\bibliography{../my_library}
+
+\usepackage{../shortcuts}
+
+% MooseTEX
+\usepackage{graphicx}
+\graphicspath{{images/},{prebuiltimages/}}
+
+% Layout
+\usepackage{fullpage}
+
+% Comments
+\usepackage[colorinlistoftodos, bordercolor=orange, backgroundcolor=orange!20, linecolor=orange, textsize=scriptsize]{todonotes}
+\newcommand{\rob}[1]{\todo[inline]{\textbf{Robert: }#1}}
+\newcommand{\nid}[1]{\todo[inline]{\textbf{Nidham: }#1}}
+
+\title{\bf Project Ideas with Alex and Jane on the ADI model}
+
+\author{Nidham Gazagnadou and Robert Gower\footnote{T\'{e}l\'{e}com Paris, France.}}
+
+\begin{document}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+QUESTIONS
+\begin{itemize}
+\item Can we assume that $\mH$ and $\mV$ are normal? In which case, why not diagonalize so that $\mH = \mU^*_H \mD_H \mU_H$ and $\mV = \mU^*_V \mD_V \mU_V.$ In which case the linear solves in~\eqref{eq:adi_iteration} are trivialized since
+\begin{align*}
+ u_{j+1/2} &= \mU_H^*(\mD_H+ p_j \mI)^{-1}\mU_H \left((p_j \mI - \mV) u_{j} + s\right) \\
+u_{j+1} &= \mU_V^*(\mD_V+ q_j \mI)^{-1}\mU_V \left( (q_j \mI - \mH) u_{j+1/2} + s\right) \enspace.
+\end{align*}
+In this case, I do not think sketching can help in making these methods more efficient. Even if $\mH$ and $\mV$ are not normal, can we afford to compute the Jordan normal form?
+\item In the case of solving Sylvesters equation~\eqref{eq:sylvester}, can we afford to compute a Jordan normal form or is possible diagonalize $\mA$ and $\mB$?
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{A linear system with two matrices}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+We tried to derive the two-step iteration of the Alternating Direction Implicit method (ADI) by starting from the following problem using notation of Chapter 1 of~\cite{wachspress2013adi}
+\begin{equation}
+    \label{eq:adi_system}
+   \mbox{find } u : \quad (\mH + \mV) u = s \enspace,
+\end{equation}
+where $H$ and $V$ are normal matrices with distinct eigenvalues and such that solving the following  linear systems is ``easy'':
+\begin{align*}
+    (\mH + p\mI) v &= r\\
+    (\mV + p\mI) w &= t \enspace.
+\end{align*}
+
+The generalized Peaceman-Rachford two-step $j$--th iteration is given in equations (3.1) and (3.2) of~\cite{wachspress2013adi} are
+\begin{equation}
+    \label{eq:adi_iteration}
+    \left\{
+        \begin{array}{ll}
+            \mbox{solve in } u_{j+1/2} \quad (\mH + p_j \mI) u_{j+1/2} = (p_j \mI - \mV) u_{j} + s \\
+            \mbox{solve in } u_{j+1} \quad (\mV + q_j \mI) u_{j+1} = (q_j \mI - \mH) u_{j+1/2} + s \enspace.
+        \end{array}
+    \right.
+\end{equation}
+with $I$ the identity matrix.
+\nid{I'm a bit confused because when I rewrite these iterations to solve in $u$ the linear system $(\mH - \mV) u = s$ I       get the following iterations
+    \[\mbox{solve in } u_{j+1/2} \quad (\mH + p_j \mI) u_{j+1/2} = (p_j \mI + \mV) u_{j} + s\]
+    \[\mbox{solve in } u_{j+1} \quad (-\mV + q_j \mI) u_{j+1} = (q_j \mI - \mH) u_{j+1/2} + s\enspace.\]
+    It differs from stated the one in equation (2) of your note. We don't have the same sign in front of matrix $V$ and here, the \emph{shift parameters} $p_j,q_j$ are not ``interlaced''  like  they are in you iterations. Could you please enlighten us on this point?
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Our computations to find the two-step update}
+\label{sec:ADiderive}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+To get to grips with the ADI method, we tried derive it in a principled way. For this, we split the variables $u = u^H = u^V$ and add the constraint $u^H =u^V$ so that solving our original problem is equivalent to solving
+\begin{eqnarray}
+ \mH u^H + \mV u^V &=& s, \label{eq:a83j8ja3} \\
+ u^H & =& u^V. \nonumber
+\end{eqnarray}
+Let $p,q \in \R$. Adding and subtracting $p u$ to both sides of~\eqref{eq:a83j8ja3} gives
+\begin{eqnarray}
+ (\mH+p\mI) u^H + \mV u^V &=& s+p u^V,  \label{eq:sysinuH}\\
+ u^H & =& u^V. \nonumber
+\end{eqnarray}
+Similarly,  Adding $q u$ and subtracting $p u$ to both sides of~\eqref{eq:a83j8ja3} gives
+\begin{eqnarray}
+ \mH u^H + (\mV+ q \mI )u^V &=& s+q u^H, \label{eq:sysinuV}\\
+ u^H & =& u^V. \nonumber
+\end{eqnarray}
+These two equivalent formulations~\eqref{eq:sysinuH} and~\eqref{eq:sysinuV} suggest a method. By alternating between solving~\eqref{eq:sysinuH} in $u^H$, $u^H =u^V$ and
+ ~\eqref{eq:sysinuV} in $u^V$ we have the resulting iterative method
+ \begin{eqnarray}
+ (\mH+p_j\mI) u^H_{j+1} &=& s+(p_j\mI-\mV) u^V_j,   \nonumber  \\
+ u^V_j & =& u_{j+1}^H  \nonumber \\
+ (\mV+ q_j \mI )u^V_{j+1} &=& s+(q_j \mI -\mH) u^H_{j+1}, \label{eq:sysinuH_contrain_syinuV}
+\end{eqnarray}
+where $p_j, q_j \in \R.$
+ Which can be simplified to
+  \begin{eqnarray}
+ (\mH+p_j \mI) u_{j+1/2} &=& s+(p_j\mI-\mV) u_j,   \label{eq:ujplushalf}  \\
+ (\mV+ q_j \mI )u_{j+1} &=& s+(q_j \mI -\mH) u_{j+1/2}.\label{eq:ujplus1}
+\end{eqnarray}
+%
+% to find the updates by adding a virtual constraint in~\cref{eq:adi_system}
+%\begin{align*}
+%    &(H + V) u = s \\
+%    \iff& \left\{
+%              \begin{array}{ll}
+%                  Hu^H + Vu^V + p I u^H - p I u^V  = s \\
+%                  u^H = u^V
+%              \end{array}
+%          \right.\\
+%    \iff& \left\{
+%              \begin{array}{ll}
+%                  (H + p I) u^H = (pI - V) u^V + s & \mbox{first step: solve in } u^H\\
+%                  u^H = u^V
+%              \end{array}
+%          \right.\\
+%    \iff& \left\{
+%              \begin{array}{ll}
+%                  (V + p I) u^V = (pI - H) u^H + s & \mbox{second step: solve in } u^V\\
+%                  u^H = u^V
+%              \end{array}
+%          \right.
+%\end{align*}
+%where $I$ denotes the a symmetric positive definite matrix.
+%\nid{Naively, we would expect an extra step to enforce the condition $u^H = u^V$, like an average
+%    \[\tilde{u}_{j+1} \leftarrow \frac{u_{j+1/2} + u_{j+1}}{2}\]
+%}
+%\rob{Or just ``solve'' for $u^H = u^V$ as I've done in the above.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{A randomized ADI method}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+It might be advantageous to only solve a sketch of~\eqref{eq:ujplushalf} and~\eqref{eq:ujplus1}. Indeed, perhaps only a rough approximate solution of the systems~\eqref{eq:ujplushalf} and~\eqref{eq:ujplus1} suffices in the initial few iterations. And only more refined solutions are called upon when the method is closer to converging.
+Let $\mM_H, \mM_V \in \R^{d\times d}$ be two positive definite matrices, let $\tau \in \N$ and let $\cD$ be a distribution over matrices $\R^{d \times \tau}.$ Consider the following randomized method
+\begin{eqnarray}
+    \mS_{1/2} & \sim & \cD \nonumber \\
+    u_{j+1/2} &=& \argmin_{u} \norm{u-u_j}_{\mM_H^{-1}} \nonumber\\
+    && \mbox{subject to} \quad \mS_{1/2}^\top (\mH+p_j\mI) u = \mS_{1/2}^\top  s+\mS_{1/2}^\top (p_j\mI-\mV) u_j,   \label{eq:ujplushalfsketch}  \\
+    \mS_{1} & \sim & \cD \nonumber \\
+    u_{j+1} &=&\argmin_{u} \norm{u-u_{j+1/2}}_{\mM_V^{-1}} \nonumber\\
+    && \mbox{subject to} \quad \mS_{1}^\top  (\mV+ q_j \mI )u = \mS_{1}^\top s+\mS_{1}^\top (q_j\mI -\mH) u_{j+1/2}.\label{eq:ujplus1sketch}
+\end{eqnarray}
+In particular if $\mH+p_j\mI$ (or $\mV+ q_j\mI$) is symmetric positive definite then choosing $\mM_H = \mH+p_j\mI$ (or $\mM_V = \mV+ q_j\mI $) will result in a more efficient method (both in terms of theory and practice).
+
+In general, $\mM_H$ should be chosen as a positive definite matrix such that $(\mH+p_j\mI ) \mM_H^{-1/2}$ is well conditioned. This suggests that the \emph{metric matrices} $\mM_H$  and $\mM_V$ should change at each iteration.
+
+The closed form solution to~\eqref{eq:ujplushalfsketch} is given by
+\begin{eqnarray}
+u_{j+1/2} &=& u_j - \mM_H(\mH+p_j \mI)^\top \mS_{1/2}\left(\mS_{1/2}^\top (\mH+p_j \mI) \mM_H(\mH+p_j \mI)^\top \right)^\dagger \mS_{1/2}^\top (\mH u_j+\mV u_j -s) \nonumber\\
+&= & u_j - \mZ_{\mH,p_j} R(u_j),
+\end{eqnarray}
+and the solution to~\eqref{eq:ujplus1sketch} is given by
+\begin{eqnarray}
+u_{j} &=& u_{j+1/2} - \mM_V(\mV+q_j \mI)^\top \mS_{1}\left(\mS_{1}^\top (\mV+q_j \mI) \mM_V(\mV+q_j \mI)^\top \right)^\dagger \mS_{1}^\top (\mH u_{j+1/2}+\mV u_{j+1/2} -s) \nonumber\\
+&= & u_{j+1/2} - \mZ_{\mV,q_j} R(u_{j+1/2}),
+\end{eqnarray}
+
+where
+\begin{eqnarray}
+ \mZ_{\mH,p_j} & \eqdef & \mM_H(\mH+p_j \mI)^\top \mS_{1/2}\left(\mS_{1/2}^\top (\mH+p_j \mI) \mM_H(\mH+p_j \mI)^\top \right)^\dagger \mS_{1/2}^\top\\
+  \mZ_{\mV,q_j} & \eqdef &  \mM_V(\mV+q_j \mI)^\top \mS_{1}\left(\mS_{1}^\top (\mV+q_j \mI) \mM_V(\mV+q_j \mI)^\top \right)^\dagger \mS_{1}^\top\\
+R(u_j)  & \eqdef  & (\mH u_j+\mV u_j -s) \; = \;  (\mH +\mV )(u_j -u_*)
+\end{eqnarray}
+\rob{Still writing}
+%To be precise, we need the smallest non-zero eigenvalue
+%\[\lambda_{\min}^+\left(\mM_H^{-1/2}\E{\mZ} \mM_H^{-1/2} \right)\]
+%to be as large as possible where
+%\[\mZ := (\mH+p_j \mI)^\top\mS\left(\mS^\top (\mH+p_j \mI) \mB^{-1}(\mH+p_j \mI)^\top  \mS\right)^\dagger   \mS^\top(\mH+p_j \mI).\]
+%\nid{Also a dependence on $j$ here that we keep in mind}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Convergence proofs}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+First let us start with the simplified setting where $\mM_H = \mM_V = \mI$ and $p_j = q_j = 0.$
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Sylvester equations}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+A special case of~\cref{eq:adi_system} is given by the Sylvester matrix equation
+\begin{equation}
+    \label{eq:sylvester}
+    \mA \mX - \mX\mB = \mC.
+\end{equation}
+This can be seen by vectorizing the above so that
+ $\mH = \mI \otimes \mA$, $\mV = -\mB^\top \otimes I$ and $s = \mbox{vec}(\mC)$ and thus
+\begin{equation*}
+    \quad (\mI \otimes \mA - \mB^\top \otimes \mI) \underbrace{\mbox{vec } (\mX)}_{u} = \mbox{vec } (\mC) \enspace.
+\end{equation*}
+%And the ADI method~\cref{eq:adi_iteration} becomes solving iteratively
+%\begin{align}
+%    &\mbox{solve in } u_{j+1/2} \quad (I \otimes A + p_j I) u_{j+1/2} = (p_j I + B \otimes I) u_{j} + \mbox{vec } (C) \\
+%    &\mbox{solve in } u_{j+1} \quad (-B \otimes I + q_j I) u_{j+1} = (q_j I - I \otimes A) u_{j+1/2} + \mbox{vec } (C) \enspace,
+%\end{align}
+%where the normalization matrix $I$ is set to the identity matrix.
+%\nid{Did I undestand correctly what you meant? Or did you mean a kind of ``matricial ADI method'', where you solve successively two matrix equations at each iteration? Like it seems to be done in Section 3.9 of\cite{wachspress2013adi}.}
+
+But perhaps we should avoid the Kronecker product and work directly with the matrix equation~\eqref{eq:sylvester}. This would also help in better exploiting the properties of the matrices $\mA$ and $\mB.$
+
+Following Heather Wilber's notes, we can also introduce parameters $p,q \in \R$ and separate~\eqref{eq:sylvester} into the following systems
+\begin{eqnarray}
+(\mA - p \mI) \mX_{\mA} &=& \mX_{\mB}(\mB - p\mI) + \mC \label{eq:syspartA}\\
+\mX_{\mB} (\mB -q \mI) &=& (\mA-  q \mI) \mX_{\mA} - \mC \label{eq:syspartB} \\
+\mX_{\mA} &=& \mX_{\mB}
+\end{eqnarray}
+The above can also be solved with an ADI method following the same steps as in Section~\ref{sec:ADiderive}. To reduce the computational burden of the full linear system solves, we introduce a sketch-and-project step in the following section.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Sketch and project for square matrices}
+\label{sec:sketch_and_project_for_ADI}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\rob{Let us start with the case that the matrices in~\eqref{eq:sylvester} are square. We can later generalize to $\mX$ being rectangular. }
+
+ For every $\mX \in \R^{d\times d}$ and $\mM \in \R^{d\times d}$ be a psd matrix and let $\norm{X}_{F(\mM)}^2 := \norm{\mM^{1/2}\mX \mM^{1/2}}_F^2 = \Tr{\mX^\top \mM \mX \mM}$ denote the weighted Frobenius norm. Let $\mM_{\mA}, \mM_{\mB} \in \R^{d\times d}$ be two given psd matrices.
+
+\begin{eqnarray}
+    \mS_{1/2} & \sim & \cD \nonumber \\
+    \mX_{j+1/2} &=& \argmin_{\mX} \norm{\mX-\mX_j}_{\mM_{\mA}} \nonumber\\
+    && \mbox{subject to} \quad \mS_{1/2}^\top(\mA - p \mI) \mX=\mS_{1/2}^\top \mX_{j}(\mB - p\mI) + \mS_{1/2}^\top\mC ,   \label{eq:Xjplushalfsketch}  \\
+    \mS_{1} & \sim & \cD \nonumber \\
+    \mX_{j+1} &=&\argmin_{\mX} \norm{\mX-\mX_{j+1/2}}_{\mM_{\mB}} \nonumber\\
+    && \mbox{subject to} \quad  \mX (\mB -q \mI)\mS_{1}  = (\mA-  q \mI) \mX_{j+1/2} \mS_{1} - \mC \mS_{1}.\label{eq:Xjplus1sketch}
+\end{eqnarray}
+Note that in~\eqref{eq:Xjplushalfsketch} we sketch on the left and in~\eqref{eq:Xjplus1sketch} we sketch from the right.
+
+The closed form solution to the above steps is given by Theorem 1 in~\cite{Gower2016}, that is
+%% X_{k+1} = X_{k} +WA^TS(S^T A WA^T S)^{-1}S^T(I-AX_{k})
+%   X_{k+1} = X_{k} +(I-X_{k}A^\top )S(S^\top  A^\top  WA S)^{-1}S^\top  A^\top W
+\begin{eqnarray}
+\mX_{j+1/2} &=& \mX_{j} +\mM_{\mA}^{-1}(\mA - p \mI)^\top \mS(\mS^\top  (\mA - p \mI) \mM_{\mA}^{-1}(\mA - p \mI)^\top \mS)^{-1}\mS^\top \left( \mX_j(\mB - p\mI) + \mC - (\mA - p \mI) \mX_j\right) \nonumber\\
+& =& \mX_{j} +\mM_{\mA}^{-1} \mZ_{\mA,p}(\mA - p \mI)^{-1} R(\mX_j). \\
+ \mX_{j+1} &=& \mX_{j+1/2} +((\mA-  q \mI) \mX_{j+1/2}  - \mC -\mX_{j+1/2}(\mB -q \mI) )\mS(\mS^\top  (\mB -q \mI)^\top  \mM_{\mB}^{-1}(\mB -q \mI) \mS)^{-1}\mS^\top  (\mB -q \mI)^\top \mM_{\mB}^{-1} \nonumber \\
+ &=& \mX_{j+1/2} -R(\mX_{j+1/2} ) (\mB -q \mI)^{-1}\mZ_{\mB,q} \mM_{\mB}^{-1},
+\end{eqnarray}
+where
+\begin{eqnarray}
+\mZ_{\mA,p} &:=& (\mA - p \mI)^\top \mS(\mS^\top  (\mA - p \mI) \mM_{\mA}^{-1}(\mA - p \mI)^\top \mS)^{-1}\mS^\top (\mA - p \mI) \\
+\mZ_{\mB,q}  &:= & (\mB -q \mI) \mS(\mS^\top  (\mB -q \mI)^\top \mM_{\mB}^{-1}(\mB -q \mI) \mS)^{-1}\mS^\top  (\mB -q \mI)^\top \\
+R(\mX) & :=&  \mC -(\mA  \mX -\mX\mB  ).
+\end{eqnarray}
+Note that $\mZ_{\mA,p}\mM_{\mA}^{-1}$, $\mZ_{\mB,q}\mM_{\mB}^{-1}$, $\mM_{\mA}^{-1}\mZ_{\mA,p}$ and $\mM_{\mB}^{-1}\mZ_{\mB,q}$ are all oblique projections since, for example, we have that
+\[\mZ_{\mB,q}\mM_{\mB}^{-1}\mZ_{\mB,q}\mM_{\mB}^{-1} = \mZ_{\mB,q}\mM_{\mB}^{-1} .\]
+
+
+Let $\mX^*$ denote the solution to~\eqref{eq:sylvester} thus  $R(\mX^*) = 0  .$ Furthermore
+\begin{equation}
+R(\mX) \; =\; (\mA  \mX^* -\mX^*\mB  ) -(\mA  \mX -\mX\mB  ) \; =\; \mA(\mX^* -\mX) -(\mX^* -\mX)\mB.
+\end{equation}
+The first important thing to note is that $\mM_{\mB}^{-1/2}\mZ_{\mB,q}\mM_{\mB}^{-1/2}$ and $\mM_{\mA}^{-1/2}\mZ_{\mA,q}\mM_{\mA}^{-1/2}$ are oblique project. Most likely (details to follow) the convergence of the above scheme will ultimately be dictated by the spectrum of $\E{\mM_{\mB}^{-1/2}\mZ_{\mB,q}\mM_{\mB}^{-1/2}}$ and $\E{\mM_{\mA}^{-1/2}\mZ_{\mA,q}\mM_{\mA}^{-1/2}}.$ To have a fast convergence (both in theory and in practice) we should should such that
+\[\mM_{\mB}^{-1/2} (\mB -q\mI)\mM_{\mB}^{-1/2} \approx \mI \]
+and
+\[\mM_{\mA}^{-1/2} (\mA -p\mI)\mM_{\mA}^{-1/2} \approx \mI. \]
+Thus $\mM_{\mA}$ and $\mM_{\mB}$ should depend on $p$ and $q$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Attempt to study the convergence of sketch and project iterates}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Let us recall the iterations of the sketch and project method presented in Section~\ref{sec:sketch_and_project_for_ADI}
+\begin{align}
+    &\mX_{j+1/2} = \mX_{j} + \mM_{\mA}^{-1} \mZ_{\mA,p}(\mA - p \mI)^{-1} R(\mX_j) = \mX_{j} + L_{\mA} R(\mX_j) \label{eq:adi_1st_step} \\
+    &\mX_{j+1} = \mX_{j+1/2} -R(\mX_{j+1/2}) (\mB -q \mI)^{-1}\mZ_{\mB,q} \mM_{\mB}^{-1} = \mX_{j+1/2} - R(\mX_{j+1/2}) L_{\mB} \label{eq:adi_2nd_step}
+\end{align}
+where we introduce $L_{\mA} \eqdef \mM_{\mA}^{-1} \mZ_{\mA,p}(\mA - p \mI)^{-1}$ and $L_{\mB} \eqdef (\mB -q \mI)^{-1}\mZ_{\mB,q} \mM_{\mB}^{-1}$ to reduce notations. We then, derive the iteration of sketch-and-project ADI in one line
+\begin{align*}
+    \mX_{j+1} &= \mX_{j+1/2} - R(\mX_{j+1/2}) L_{\mB} \\
+              &= \mX_{j} + L_{\mA} R(\mX_j) - R(\mX_{j} + L_{\mA} R(\mX_j)) L_{\mB} \\
+              &= \mX_{j} + L_{\mA} R(\mX_j) - \left[R(\mX_{j}) - \mA L_{\mA} R(\mX_j) + L_{\mA} R(\mX_j) \mB \right] L_{\mB} \\
+              &= \mX_{j} + L_{\mA} R(\mX_j) - R(\mX_{j}) L_{\mB} + \mA L_{\mA} R(\mX_j) L_{\mB} - L_{\mA} R(\mX_j) \mB L_{\mB}
+\end{align*}
+
+By observing that $R(\mX) = \mC - (\mA \mX - \mX \mB) = - \mA (\mX - \mX^*) + (\mX - \mX^*) \mB$, we try to develop the error of the iterates.
+\begin{align*}
+    \mDelta_{j+1} \eqdef& \mX_{j+1} - \mX^* \\
+    =& \mX_{j} - \mX^* + L_{\mA} R(\mX_j) - R(\mX_{j}) L_{\mB} + \mA L_{\mA} R(\mX_j) L_{\mB} - L_{\mA} R(\mX_j) \mB L_{\mB} \\
+    =& \mX_{j} - \mX^* + L_{\mA} \left[- \mA (\mX_{j} - \mX^*) + (\mX_{j} - \mX^*) \mB\right] - \left[- \mA (\mX_{j} - \mX^*) + (\mX_{j} - \mX^*) \mB\right] L_{\mB} \\
+     &+ \mA L_{\mA} \left[- \mA (\mX_{j} - \mX^*) + (\mX_{j} - \mX^*) \mB\right] L_{\mB} - L_{\mA} \left[- \mA (\mX_{j} - \mX^*) + (\mX_{j} - \mX^*) \mB\right] \mB L_{\mB} \\
+    =& \mDelta_{j} - L_{\mA} \mA \mDelta_{j} + L_{\mA} \mDelta_{j} \mB + \mA \mDelta_{j} L_{\mB} - \mDelta_{j} \mB L_{\mB} \\
+     &- \mA L_{\mA} \mA \mDelta_{j} L_{\mB} + \mA L_{\mA} \mDelta_{j} \mB L_{\mB} + L_{\mA} \mA \mDelta_{j} \mB L_{\mB} - L_{\mA} \mDelta_{j} \mB \mB L_{\mB}
+\end{align*}
+
+\nid{If we could express this error as the identity minus an operator
+\[ \mDelta_{j+1} = (\mbox{Id} - \Phi) (\mDelta_{j}) \]
+Then, the convergence would be given by the smallest non-zero eigenvalue of $\Phi$.
+}
+\rob{We should try to find a recurrence for $R(\mX_j)$, that is something like
+\[ R(\mX_{j+1}) \leq \mL(R(\mX_j)), \]
+where $\mL$ is a linear operator over $\R^{d\times d}.$ Then we study the operator norm of $\mL$ induced by some matrix norm. This solves the issue of having potentially multiple solutions.
+}
+\rob{We don't need the error to fit such a format. All we need is a linear recurrence for the error, that is
+\[\mDelta_{j+1} = \mL(\mDelta_{j} ), \]
+where $\mL$ is a linear operator in matrix space. And this is exactly what we have. Next we need to study the induced norm of the operator, that is
+\[\|| \mL \|| = \sup_{\mX \in \R^{d\times d}, \, \mX \neq 0 } \frac{\norm{\mL \mX}}{\norm{\mX}},\]
+where here $\norm{\mL \mX}$ denotes some matrix norm. Our issue is that we have two natural candidates for a matrix norm, namely $\norm{\cdot}_{\mM_{\mA}}$ and $\norm{\cdot}_{\mM_{\mB}}.$
+ }
+ I think we should first try
+ \begin{enumerate}
+ \item Recurrences in $R(\mX_j).$
+ \item Prove convergence for the above recurrence for $\mDelta_j$ for the case that $\mM_{\mB} = \mM_{\mA} = \mI.$
+ \item Show that $\norm{\mDelta_{j+1}}_{\mM_{\mB}} \leq \rho_{\mB}\norm{\mDelta_{j+1/2}}_{\mM_{\mB}}$ and $\norm{\mDelta_{j+1/2}}_{\mM_{\mA}} \leq \rho_{\mA}\norm{\mDelta_{j}}_{\mM_{\mA}}$ where, hopefully, $0 \leq \rho_{\mA}, \rho_{\mB}\leq 1 $.
+\end{enumerate}
+
+
+
+
+\subsection{Two step re-organizing proof}
+\rob{The concept of this proof is to try and make $(\mA-q\mI) (\mA-p\mI)^{-1}$ on the left and $(\mB-p\mI) (\mB-q\mI)^{-1}$ on the right. In a sense, copying the original proof of ADI.}
+
+Let $\mM_{\mA} = \mI = \mM_{\mB}$ to simplify matters.
+
+
+Using that $ R(\mX_j) = \mDelta_j\mB  -\mA \mDelta_j$ we have that
+\begin{align*}
+ \mX_{j+1/2} -\mX^*&= \mX_{j}-\mX^* +L_{\mA} R(\mX_{j})    \\
+ & = \mDelta_j +\mZ_{\mA,p}(\mA-p\mI)^{-1} (\mDelta_j\mB  -\mA \mDelta_j)\\
+& =  \mDelta_j +\mZ_{\mA,p}\left((\mA-p\mI)^{-1} \mDelta_j\mB  -\mA (\mA-p\mI)^{-1}\mDelta_j \right) \\
+& = \mDelta_j +\mZ_{\mA,p}\left((\mA-p\mI)^{-1} \mDelta_j\mB  -(\mA-q\mI) (\mA-p\mI)^{-1}\mDelta_j  -q (\mA-p\mI)^{-1}\mDelta_j \right)  \\
+&= \mDelta_j +\mZ_{\mA,p}\left((\mA-p\mI)^{-1} \mDelta_j(\mB-q\mI)  -(\mA-q\mI) (\mA-p\mI)^{-1}\mDelta_j  \right)
+\end{align*}
+Now using that
+\begin{equation}
+    \label{eq:useful_identity_A}
+    (\mA - q \mI) (\mA - p \mI)^{-1} - \mI = \left[(\mA - q \mI) - (\mA - p \mI)\right] (\mA - p \mI)^{-1} = (p-q) (\mA - p \mI)^{-1}
+\end{equation}
+\begin{equation}
+    \label{eq:useful_identity_B}
+    (\mB - p \mI) (\mB - q \mI)^{-1} - \mI = (q-p) (\mB - q \mI)^{-1}
+\end{equation}
+and
+\[ (\mB-q\mI)^{-1}\mB = \mB (\mB-q\mI)^{-1} \quad \mbox{and} \quad (\mA-p\mI)^{-1}\mA = \mA (\mA-p\mI)^{-1},\]
+we have that
+\begin{align}
+ \mDelta_{j+1/2}
+&\overset{\eqref{eq:useful_identity_A}}{=} \mDelta_j +\mZ_{\mA,p}\left(\frac{1}{p-q}\left(  (\mA - q \mI) (\mA - p \mI)^{-1} - \mI \right) \mDelta_j(\mB-q\mI)  -(\mA-q\mI) (\mA-p\mI)^{-1}\mDelta_j  \right) \nonumber \\
+&= \mDelta_j +\mZ_{\mA,p}\left(\frac{1}{p-q} (\mA - q \mI) (\mA - p \mI)^{-1} \left(\mDelta_j(\mB-q\mI)  -(p-q)\mDelta_j\right)  -\frac{1}{p-q}\mDelta_j(\mB-q\mI) \right) \nonumber\\
+&= \mDelta_j +\frac{1}{p-q}\mZ_{\mA,p}\left( (\mA - q \mI) (\mA - p \mI)^{-1} \mDelta_j(\mB-p\mI)    -\mDelta_j(\mB-q\mI) \right)\nonumber \\
+&=  \mDelta_j +\frac{1}{p-q}\mZ_{\mA,p}\left( \Delta_j^{\mA,\mB}    -\mDelta_j \right) (\mB-q\mI)\label{eq:deltajhalfdev}
+\end{align}
+where  $\Delta_j^{\mA,\mB}  \eqdef (\mA - q \mI) (\mA - p \mI)^{-1} \mDelta_j(\mB-p\mI)(\mB-q\mI)^{-1} $.
+
+Similarly
+\begin{align}
+ \mDelta_{j+1} &=     \mX_{j+1}  -\mX^*  \nonumber \\
+ &= \mX_{j+1/2} -\mX^* - R(\mX_{j+1/2}) L_{\mB} \nonumber\\
+    &=  \mDelta_{j+1/2} - ( \mDelta_{j+1/2} (\mB-p\mI)  -(\mA-p\mI) \mDelta_{j+1/2} ) (\mB-q\mI)^{-1}\mZ_{\mB,q}   \nonumber\\
+    &\overset{\eqref{eq:useful_identity_B}}{=} \mDelta_{j+1/2} - \left( \mDelta_{j+1/2} (\mB-p\mI)(\mB-q\mI)^{-1}  -\frac{1}{q-p}(\mA-p\mI) \mDelta_{j+1/2}\left(    (\mB - p \mI) (\mB - q \mI)^{-1}- \mI  \right) \right) \mZ_{\mB,q} \nonumber \\
+    &= \mDelta_{j+1/2} +\frac{1}{q-p}\left( (\mA-q\mI)\mDelta_{j+1/2} (\mB-p\mI)(\mB-q\mI)^{-1}  -(\mA-p\mI) \mDelta_{j+1/2} \right) \mZ_{\mB,q}\nonumber \\
+% \\   &=  \mDelta_{j+1/2} +\frac{1}{q-p}(\mA-q\mI)\left( \mDelta_{j+1/2} (\mB-p\mI)(\mB-q\mI)^{-1}  -(\mA-q\mI)^{-1}(\mA-p\mI) \mDelta_{j+1/2} \right) \mZ_{\mB,q}.
+     \label{eq:deltajplsdev}
+    % &= \mDelta_{j+1/2} +\frac{1}{q-p} (\mA-p\mI) \left( \Delta_{j+1/2}^{\mA,\mB} - \mDelta_{j+1/2} \right) \mZ_{\mB,q}\nonumber
+\end{align}
+% where the last equality uses the fact that $(\mA-p\mI)^{-1}$ and $(\mA-q\mI)$ commute.
+
+Combining~\eqref{eq:deltajhalfdev} and~\eqref{eq:deltajplsdev}  we have that
+
+\begin{align*}
+ \mDelta_{j+1}
+    &=  \mDelta_j +\frac{1}{p-q}\mZ_{\mA,p}\left( \Delta_j^{\mA,\mB}     -\mDelta_j \right) (\mB-q\mI)\\
+    & \;  +\frac{1}{q-p}(\mA-q\mI) \left( \mDelta_j +\frac{1}{p-q}\mZ_{\mA,p}\left( \Delta_j^{\mA,\mB}    -\mDelta_j \right) (\mB-q\mI)\right) (\mB-p\mI)(\mB-q\mI)^{-1}\mZ_{\mB,q}  \\
+    & \; -\frac{1}{q-p}(\mA-p\mI)  \left( \mDelta_j +\frac{1}{p-q}\mZ_{\mA,p}\left( \Delta_j^{\mA,\mB}    -\mDelta_j \right) (\mB-q\mI)\right)   \mZ_{\mB,q}.
+\end{align*}
+Just focusing on the terms with $\mDelta_j$ in the above we have
+
+\begin{align*}
+ \mDelta_j -\frac{1}{p-q}\mZ_{\mA,p}\mDelta_j (\mB-q\mI)+\frac{1}{q-p}(\mA-q\mI) \left( \mDelta_j -\frac{1}{p-q}\mZ_{\mA,p}\mDelta_j  (\mB-q\mI)\right) (\mB-p\mI)(\mB-q\mI)^{-1}\mZ_{\mB,q} \\
+ -\frac{1}{q-p}(\mA-p\mI)  \left( \mDelta_j -\frac{1}{p-q}\mZ_{\mA,p} \mDelta_j  (\mB-q\mI)\right)   \mZ_{\mB,q}
+\end{align*}
+and using that
+\begin{align}
+\mDelta_j -\frac{1}{p-q}\mZ_{\mA,p} \mDelta_j  (\mB-q\mI) = (\mI - \mZ_{\mA,p} )\mDelta_j  -\frac{1}{p-q}\mZ_{\mA,p} \mDelta_j  (\mB-p\mI)
+\end{align}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Convergence using norm equivalence}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+One can prove that after sketch-and-project procedure presented in \eqref{eq:Xjplushalfsketch} and \eqref{eq:Xjplus1sketch}. We can prove that the following inequality hold
+\begin{align}
+    \E{\norm{\mX_{j+1/2}-\mX^*}_{\mM_{\mA}}^2} &\overset{\eqref{eq:Xjplushalfsketch}}{\leq} \rho_{\mA} \E{\norm{\mX_{j}-\mX^*}_{\mM_{\mA}}^2} \label{eq:cv_rho_A}\\
+    \E{\norm{\mX_{j+1}-\mX^*}_{\mM_{\mB}}^2} &\overset{\eqref{eq:Xjplus1sketch}}{\leq} \rho_{\mB} \E{\norm{\mX_{j+1/2}-\mX^*}_{\mM_{\mB}}^2} \label{eq:cv_rho_B} \enspace,
+\end{align}
+where the convergence rate are respectively defined as $\rho_{\mA} \eqdef 1 - \lambda_{\min}^{+} \left(\mM_{\mA}^{-1/2} \E{\mZ_{\mA}} \mM_{\mA}^{-1/2}\right)$ and $\rho_{\mB} \eqdef 1 - \lambda_{\min}^{+} \left(\mM_{\mB}^{-1/2} \E{\mZ_{\mB}} \mM_{\mB}^{-1/2}\right)$\footnote{$\lambda_{\min}^{+} (\mA)$ denotes the smallest non-zero eigenvalue of $\mA$.}.
+Now, we try to transfer these inequalities in the same metric. We rewrite the following norm
+\begin{align*}
+    \norm{\mX}_{\mM_{\mA}}^2 &= \norm{\mM_{\mA}^{1/2} \mX \mM_{\mA}^{1/2}}_{F}^2
+    = \norm{\mM_{\mA}^{1/2} \mM_{\mB}^{-1/2} \mM_{\mB}^{1/2} \mX \mM_{\mB}^{1/2} \mM_{\mB}^{-1/2} \mM_{\mA}^{1/2}}_{F}^2 \\
+    &\leq \norm{\mM_{\mA}^{1/2} \mM_{\mB}^{-1/2}}_{F}^4 \norm{\mM_{\mB}^{1/2} \mX \mM_{\mB}^{1/2}}_{F}^2
+    = C_1 \norm{\mX}_{\mM_{\mB}}^2 \enspace.
+\end{align*}
+where in the last inequality we use twice the sub-multiplicativity of the Frobenius norm\footnote{$\norm{\mA \mB}_{F} \leq \norm{\mA}_{F} \norm{\mB}_{F}$.}. Similarly we get $\norm{\mX}_{\mM_{\mB}}^2 \leq C_2 \norm{\mX}_{\mM_{\mA}}^2$ with $C_2 \eqdef \norm{\mM_{\mB}^{1/2} \mM_{\mA}^{-1/2}}_{F}^4$. And, by plugging these inequalities into \eqref{eq:cv_rho_A} and \eqref{eq:cv_rho_B} we get
+\begin{align}
+    \E{\norm{\mX_{j+1}-\mX^*}_{\mM_{\mA}}^2} &\leq \rho_{\mA} \rho_{\mB} C_1 C_2 \E{\norm{\mX_{j}-\mX^*}_{\mM_{\mA}}^2}\\
+    \E{\norm{\mX_{j+1}-\mX^*}_{\mM_{\mB}}^2} &\leq \rho_{\mA} \rho_{\mB} C_1 C_2 \E{\norm{\mX_{j}-\mX^*}_{\mM_{\mB}}^2} \enspace.
+\end{align}
+The problem is that either of this upper bound is very loose. Indeed, if we set $\mM_{\mA}$ and $\mM_{\mB}$ to the identity matrix, $C_1 = C_2 = \norm{\mI}_{F}^4 = d^2$ and this rate becomes $\rho_{\mA} \rho_{\mB} C_1 C_2 = \rho_{\mA} \rho_{\mB} d^4$. This rates is meaningless due to the dependency in the dimension $d$, compared to the bound we would have directly from combining \eqref{eq:cv_rho_A} and \eqref{eq:cv_rho_B} which are in this case already expressed in the same metric:
+\begin{align}
+    \E{\norm{\mX_{j+1}-\mX^*}_{F}^2} &\leq \rho_{\mA} \rho_{\mB} \E{\norm{\mX_{j}-\mX^*}_{F}^2} \enspace.
+\end{align}
+
+{\printbibliography}
+
+\end{document}

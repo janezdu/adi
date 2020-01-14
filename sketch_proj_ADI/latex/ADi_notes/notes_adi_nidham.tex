@@ -1,0 +1,159 @@
+\documentclass[10pt]{article}
+
+% Mathematics
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{dsfont}
+\usepackage{hyperref} % clickable links and references
+
+\makeatletter
+\renewcommand*{\eqref}[1]{%
+  \hyperref[{#1}]{\textup{\tagform@{\ref*{#1}}}}%
+}
+\makeatother
+
+% Each counter is different
+\usepackage{amsthm} % style of theorem, definition etc
+\usepackage{cleveref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}{Corollary}[section]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{assumption}{Assumption}[section]
+\newtheorem{note}{Remark}[section]
+\newtheorem{remark}{Remark}[section]
+
+
+
+% \crefname{theorem}{theorem}{theorems}
+% \crefname{remark}{remark}{remarks}
+
+% Bibliography
+\usepackage[maxbibnames=99, giveninits=true, doi=false, isbn=false, url=false, natbib=true, backend=bibtex]{biblatex}
+\bibliography{../my_library}
+
+\usepackage{../shortcuts}
+
+% MooseTEX
+\usepackage{graphicx}
+\graphicspath{{images/},{prebuiltimages/}}
+
+% Layout
+\usepackage{fullpage}
+
+% Comments
+\usepackage[colorinlistoftodos, bordercolor=orange, backgroundcolor=orange!20, linecolor=orange, textsize=scriptsize]{todonotes}
+\newcommand{\rob}[1]{\todo[inline]{\textbf{Robert: }#1}}
+\newcommand{\nid}[1]{\todo[inline]{\textbf{Nidham: }#1}}
+
+\title{\bf Notes on the convergence of the ADI method}
+
+\author{Nidham Gazagnadou\footnote{T\'{e}l\'{e}com Paris, France.}}
+
+\begin{document}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Based on Heather Wilber's notes on Zolotarev numbers, this note aims at redoing proofs and detailing computations of the convergence of the ADI method when solving the Sylvester equation
+\begin{equation}
+    \label{eq:Sylvester_eq}
+    \mA \mX - \mX \mB = \mC \enspace .
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Convergence of the ADI method}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{ADI error of the iterates}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The ADI iterations are given by
+\begin{align}
+    &(\mA - p \mI) \mX_{j+1/2} = \mX_{j}(\mB - p \mI) + \mC  \label{eq:adi_1st_step} \\
+    &\mX_{j+1}(\mB - q \mI) = (\mA - q \mI)\mX_{j+1/2} - \mC \label{eq:adi_2nd_step} \enspace.
+\end{align}
+
+Assuming that there is an unique solution $\mX^*$ to the Sylvester equation \eqref{eq:Sylvester_eq} (for instance if the spectrum of $\mA$ and $\mB$ are separated enough), this solution satisfies the following equation
+\begin{align}
+    &(\mA - p \mI) \mX^* (\mB - q \mI) - (\mA - q \mI) \mX^* (\mB - p \mI) = (p-q) \mC \nonumber \\
+    \Rightarrow &(p-q) (\mA - p \mI)^{-1} \mC (\mB - q \mI)^{-1} - \mX^* = -(\mA - p \mI)^{-1} (\mA - q \mI) \mX^* (\mB - p \mI) (\mB - q \mI)^{-1} \label{eq:solution_characteristic}
+\end{align}
+which directly results from developing the left-hand side and using the fact that $\mX^*$ satisfies \eqref{eq:Sylvester_eq}.
+
+Let us observe that
+\begin{equation}
+    \label{eq:useful_identity}
+    (\mA - q \mI) (\mA - p \mI)^{-1} - \mI = \left[(\mA - q \mI) - (\mA - p \mI)\right] (\mA - p \mI)^{-1} = (p-q) (\mA - p \mI)^{-1}
+\end{equation}
+
+Now, let us combine \eqref{eq:adi_1st_step} and \eqref{eq:adi_2nd_step} to derive the ADI update in one step
+\begin{align}
+    &\mX_{j+1}(\mB - q \mI) \overset{\eqref{eq:adi_1st_step}+\eqref{eq:adi_2nd_step}}{=} (\mA - q \mI) (\mA - p \mI)^{-1} \mX_{j}(\mB - p \mI) + (\mA - q \mI) (\mA - p \mI)^{-1} \mC - \mC \nonumber \\
+    \iff& \mX_{j+1} = (\mA - q \mI) (\mA - p \mI)^{-1} \mX_{j}(\mB - p \mI) (\mB - q \mI)^{-1} + \left[(\mA - q \mI) (\mA - p \mI)^{-1} - \mI\right] \mC (\mB - q \mI)^{-1} \nonumber \\
+    \overset{\eqref{eq:useful_identity}}{\iff}& \mX_{j+1} = (\mA - q \mI) (\mA - p \mI)^{-1} \mX_{j}(\mB - p \mI) (\mB - q \mI)^{-1} + (p-q)(\mA - p \mI)^{-1} \mC (\mB - q \mI)^{-1} \label{eq:ADI_iteration_one_line}
+\end{align}
+
+So, we get the ADI error
+\begin{align*}
+    &\mX_{j+1} - \mX^* \overset{\eqref{eq:ADI_iteration_one_line}}{=} (\mA - q \mI) (\mA - p \mI)^{-1} \mX_{j}(\mB - p \mI) (\mB - q \mI)^{-1} + (p-q)(\mA - p \mI)^{-1} \mC (\mB - q \mI)^{-1} - \mX^* \\
+    \Rightarrow &\mX_{j+1} - \mX^* \overset{\eqref{eq:solution_characteristic}}{=} (\mA - q \mI) (\mA - p \mI)^{-1} \mX_{j}(\mB - p \mI) (\mB - q \mI)^{-1} - (\mA - p \mI)^{-1} (\mA - q \mI) \mX^* (\mB - p \mI) (\mB - q \mI)^{-1}
+\end{align*}
+
+Finally, the ADI error is the following
+\begin{equation}
+    \label{eq:ADI_error}
+    \Rightarrow \boxed{\mX_{j+1} - \mX^* = (\mA - q \mI) (\mA - p \mI)^{-1} (\mX_{j} - \mX^*) (\mB - p \mI) (\mB - q \mI)^{-1}}
+\end{equation}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{ADI error of the residual}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Let us introduce what we call \emph{the residual} of the Sylvester equation~\eqref{eq:Sylvester_eq}
+\begin{equation}
+    R(\mX) \eqdef \mC - (\mA \mX - \mX \mB)
+\end{equation}
+We can first observe that
+\begin{equation*}
+    R(\mX) = \mC - (\mA \mX - \mX \mB) = - \mA (\mX - \mX^*) + (\mX - \mX^*) \mB
+\end{equation*}
+
+So, the recurrence relation follows
+\begin{align*}
+    &R(\mX_{j+1}) \\
+    &= - \mA (\mX_{j+1} - \mX^*) + (\mX_{j+1} - \mX^*) \mB \\
+    &\overset{\eqref{eq:ADI_error}}{=} - \mA (\mA - q \mI) (\mA - p \mI)^{-1} (\mX_{j} - \mX^*) (\mB - p \mI) (\mB - q \mI)^{-1} + (\mA - q \mI) (\mA - p \mI)^{-1} (\mX_{j} - \mX^*) (\mB - p \mI) (\mB - q \mI)^{-1} \mB \\
+    &= - (\mA - q \mI) (\mA - p \mI)^{-1} \mA (\mX_{j} - \mX^*) (\mB - p \mI) (\mB - q \mI)^{-1} + (\mA - q \mI) (\mA - p \mI)^{-1} (\mX_{j} - \mX^*) \mB (\mB - p \mI) (\mB - q \mI)^{-1} \\
+    &= (\mA - q \mI) (\mA - p \mI)^{-1} \left[- \mA (\mX_{j} - \mX^*) + (\mX_{j} - \mX^*) \mB \right] (\mB - p \mI) (\mB - q \mI)^{-1} \\
+    &= (\mA - q \mI) (\mA - p \mI)^{-1} R(\mX_{j}) (\mB - p \mI) (\mB - q \mI)^{-1}
+\end{align*}
+
+where in the second equality we use that $\mA$, $(\mA - q \mI)$ and $(\mA - p \mI)^{-1}$ commute. The same holds for $\mB$, $(\mB - p \mI)$ and $(\mB - q \mI)^{-1}$.
+
+Finally, the ADI error of the residual (equivalent of suboptimality in optimization) is the following
+\begin{equation}
+    \label{eq:ADI_residual_error}
+    \Rightarrow \boxed{R(\mX_{j+1}) = (\mA - q \mI) (\mA - p \mI)^{-1} R(\mX_{j}) (\mB - p \mI) (\mB - q \mI)^{-1}}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Conclusion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The error of the ADI iterates and the residual of the ADI iterates have the same behaviour.
+
+
+{\printbibliography}
+
+\end{document}

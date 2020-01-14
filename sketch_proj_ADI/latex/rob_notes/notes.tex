@@ -1,0 +1,215 @@
+\documentclass[a4paper, 11pt, twoside]{article}
+\usepackage{fullpage}
+
+\usepackage{amsmath,amsfonts,amssymb,amsthm,array}
+\usepackage{algorithm}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algpseudocode}
+\usepackage{bm}
+\usepackage{color}
+\usepackage{graphicx}
+
+\def\x{{\mathbf x}}
+\def\L{{\cal L}}
+
+\newcommand{\Exp}{\mathbb{E}}
+\newcommand{\E}[1]{{\mathbb{E}\left[#1\right] }}    % expectation
+\newcommand{\ones}{\mathbf{1}}
+\newcommand{\EE}[2]{{\mathbb{E}_{#1}\left[#2\right] }}
+\newcommand{\Prob}[1]{\mathbb{P} \left[ #1\right]}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Diag}[1]{\mathbf{Diag}\left( #1\right)}
+\providecommand{\kernel}[1]{{\rm Null}\left( #1\right)}
+\providecommand{\range}[1]{{\rm Range}\left( #1\right)}
+\providecommand{\support}[1]{{\rm supp}\left( #1\right)}
+\providecommand{\span}[1]{{\rm Span}\left\{ #1\right\}}
+\providecommand{\trace}[1]{{\rm Trace}\left( #1\right)}
+\providecommand{\norm}[1]{\left\| #1\right\|}
+\newcommand{\dotprod}[1]{\left< #1\right>}
+
+\usepackage{tikz}
+
+\newcommand\encircle[1]{%
+  \tikz[baseline=(X.base)]
+    \node (X) [draw, shape=circle, inner sep=0] {\strut #1};}
+
+
+\newcommand*{\Scale}[2][4]{\scalebox{#1}{$#2$}}
+
+
+% matrices
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\bB}{\mathbf{B}}
+\newcommand{\bC}{\mathbf{C}}
+\newcommand{\bD}{\mathbf{D}}
+\newcommand{\bG}{\mathbf{G}}
+\newcommand{\bH}{\mathbf{H}}
+\newcommand{\bI}{\mathbf{I}}
+\newcommand{\bL}{\mathbf{L}}
+\newcommand{\bM}{\mathbf{M}}
+\newcommand{\bN}{\mathbf{N}}
+\newcommand{\bP}{\mathbf{P}}
+\newcommand{\bQ}{\mathbf{Q}}
+\newcommand{\bR}{\mathbf{R}}
+\newcommand{\bS}{\mathbf{S}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bW}{\mathbf{W}}
+\newcommand{\bZ}{\mathbf{Z}}
+\newcommand{\bU}{\mathbf{U}}
+\newcommand{\bT}{\mathbf{T}}
+% various
+\newcommand{\eqdef}{:=}
+
+
+% caligraphic
+\newcommand{\cA}{{\cal A}}
+\newcommand{\cB}{{\cal B}}
+\newcommand{\cC}{{\cal C}}
+\newcommand{\cD}{{\cal D}}
+\newcommand{\cE}{{\cal E}}
+\newcommand{\cF}{{\cal F}}
+\newcommand{\cG}{{\cal G}}
+\newcommand{\cH}{{\cal H}}
+\newcommand{\cJ}{{\cal J}}
+\newcommand{\cK}{{\cal K}}
+\newcommand{\cL}{{\cal L}}
+\newcommand{\cM}{{\cal M}}
+\newcommand{\cN}{{\cal N}}
+\newcommand{\cO}{{\cal O}}
+\newcommand{\cP}{{\cal P}}
+\newcommand{\cQ}{{\cal Q}}
+\newcommand{\cR}{{\cal R}}
+\newcommand{\cS}{{\cal S}}
+\newcommand{\cT}{{\cal T}}
+\newcommand{\cU}{{\cal U}}
+\newcommand{\cV}{{\cal V}}
+\newcommand{\cX}{{\cal X}}
+\newcommand{\cY}{{\cal Y}}
+\newcommand{\cW}{{\cal W}}
+\newcommand{\cZ}{{\cal Z}}
+
+% matrices
+\newcommand{\mA}{{\bf A}}
+\newcommand{\mB}{{\bf B}}
+\newcommand{\mC}{{\bf C}}
+\newcommand{\mE}{{\bf E}}
+\newcommand{\mF}{{\bf F}}
+\newcommand{\mG}{{\bf G}}
+\newcommand{\mH}{{\bf H}}
+\newcommand{\mI}{{\bf I}}
+\newcommand{\mJ}{{\bf J}}
+\newcommand{\mK}{{\bf K}}
+\newcommand{\mL}{{\bf L}}
+\newcommand{\mM}{{\bf M}}
+\newcommand{\mN}{{\bf N}}
+\newcommand{\mO}{{\bf O}}
+\newcommand{\mP}{{\bf P}}
+\newcommand{\mQ}{{\bf Q}}
+\newcommand{\mR}{{\bf R}}
+\newcommand{\mS}{{\bf S}}
+\newcommand{\mT}{{\bf T}}
+\newcommand{\mU}{{\bf U}}
+\newcommand{\mV}{{\bf V}}
+\newcommand{\mW}{{\bf W}}
+\newcommand{\mX}{{\bf X}}
+\newcommand{\mY}{{\bf Y}}
+\newcommand{\mZ}{{\bf Z}}
+\newcommand{\mGamma}{{\bf \Gamma}}
+
+\usepackage{mdframed}
+\usepackage{thmtools}
+
+\definecolor{shadecolor}{gray}{0.9}
+\declaretheoremstyle[
+headfont=\normalfont\bfseries,
+notefont=\mdseries, notebraces={(}{)},
+bodyfont=\normalfont,
+postheadspace=0.5em,
+spaceabove=1pt,
+mdframed={
+  skipabove=8pt,
+  skipbelow=8pt,
+  hidealllines=true,
+  backgroundcolor={shadecolor},
+  innerleftmargin=4pt,
+  innerrightmargin=4pt}
+]{shaded}
+
+
+\declaretheorem[style=shaded,within=section]{definition}
+\declaretheorem[style=shaded,sibling=definition]{theorem}
+\declaretheorem[style=shaded,sibling=definition]{proposition}
+\declaretheorem[style=shaded,sibling=definition]{assumption}
+\declaretheorem[style=shaded,sibling=definition]{corollary}
+\declaretheorem[style=shaded,sibling=definition]{conjecture}
+\declaretheorem[style=shaded,sibling=definition]{lemma}
+\declaretheorem[style=shaded,sibling=definition]{remark}
+\declaretheorem[style=shaded,sibling=definition]{example}
+
+
+
+\newcommand*{\Scales}[2][4]{\scalebox{#1}{$#2$}}
+% TO DO NOTES
+\usepackage[colorinlistoftodos,bordercolor=orange,backgroundcolor=orange!20,linecolor=orange,textsize=scriptsize]{todonotes}
+\newcommand{\mt}[1]{\todo[inline,color=pink]{#1}}
+
+
+
+\newcommand{\nidham}[1]{\todo[inline]{{\textbf{Nidham:} \emph{#1}}}}
+\newcommand{\rachael}[1]{\todo[inline]{{\textbf{Peter:} \emph{#1}}}}
+\newcommand{\rob}[1]{\todo[inline]{{\textbf{Rob:} \emph{#1}}}}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\begin{document}
+\title{Sketchy Lyapunov and Sylvester equations}
+
+%\author{Rachael, Nidham and Robert}
+%\date{}
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+\section{Sylvester matrix equation}
+Consider the equation
+\begin{equation} \label{eq:sylvester}
+ \mA \mX -\mX \mB = \mF, 
+\end{equation}
+where $\mA, \mB$ and $\mF$ are given matrices and $\mX$ and unknown matrix, all of appropriate dimensions.
+
+By vectorizing 
+
+
+\rob{My guess on ADI method}
+
+\subsection{Rob's naive guess on the ADI method}
+
+
+
+\subsection{Constrained random subspace algorithm}
+
+
+
+\begin{align}
+\mS^t  \sim  &\cD \nonumber \\
+\mX^{t+1} = &\arg \min \norm{\mA \mX -\mX \mB -\mF}_F^2 \nonumber \\
+& \mbox{subject to } \mX = \mX^t + \mS^t \mY^\top, \quad \mY\mbox{ free}. \label{eq:subspaceSylvester}
+\end{align}
+We might try a different weighted Frobenius norm.
+
+\rob{Is solving~\eqref{eq:subspaceSylvester} equivalent to solving a small scale Sylvester equation?}
+%{
+%\footnotesize
+%\bibliographystyle{plain}
+%\bibliography{eigen_sketch_proj}
+%}
+
+
+\appendix
+
+
+\end{document}
