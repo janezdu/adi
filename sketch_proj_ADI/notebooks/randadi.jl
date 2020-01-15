@@ -34,7 +34,6 @@ function rand_linsolve(A,b,B, Stype, seed=nothing, verbose=false)
     Binv = inv(B)
     xprev = x0
 
-
     while true
         i = rand(1:m)
 
@@ -71,17 +70,24 @@ function rand_matsolve(A,B,seed=nothing)
             B: matrix mxk
     OUTPUT: X: matrix such that AX = B
     """
-
+    
     m1,n = size(A)
     m2,k = size(B)
     sol = zeros(n,k)
     @assert m1==m2
-
     s(b) = rand_linsolve(A,b,I,"coordvec", seed)
-    return mapslices(s,B,dims=[1])
+    ret = mapslices(s,B,dims=[1])
+    return ret
 end
 
 function adi_solve(A,B,F,N,p,q)
+    """
+    Uses randomized ADI to solve the equation AX - XB = F
+    INPUT:
+            A: matrix mxn
+            B: matrix mxk
+    OUTPUT: X: matrix such that AX = B
+    """
     m,m2 = size(A)
     n,n2 = size(B)
 
